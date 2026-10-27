@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caryl Atienza Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Tokens: lifted from website-portfolio (globals.css, page.module.css) ── */
+  :root {
+    --background: #060607;            /* globals.css --background */
+    --foreground: #f5f5f7;            /* globals.css --foreground */
+    --ink-quiet: rgba(245, 245, 247, 0.62);
+    --ink-faint: rgba(245, 245, 247, 0.5);
+    --ink-ghost: rgba(245, 245, 247, 0.38);   /* card-front.svg footer */
+    --hairline: rgba(255, 255, 255, 0.10);    /* card-front.svg frame */
+    --glow: rgba(120, 130, 160, 0.16);        /* page.module.css .page::before */
+    --enter: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* The one accent, taken from the reference. Hue 228° — the same hue
+       family as the portfolio's cool glow, pushed to full saturation. */
+    --signal: #2b47ff;
+    --signal-deep: #1124b8;
+    --signal-night: #0a1150;
+
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, monospace;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: relative;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 55% at 50% 30%, var(--glow), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── Preview shell ── */
+  .shell {
+    position: relative;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 3.5vw, 2.5rem) clamp(1rem, 4.5vw, 3.5rem) 4rem;
+  }
+
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+    margin-bottom: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .mark-text { font-size: 0.875rem; font-weight: 500; letter-spacing: -0.011em; }
+
+  .meta {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-quiet);
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  .controls button {
+    font: inherit;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-quiet);
+    background: transparent;
+    border: 1px solid var(--hairline);
+    border-radius: 2px;
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+  .controls button:hover,
+  .controls button[aria-pressed="true"] { color: var(--foreground); border-color: rgba(255, 255, 255, 0.32); }
+  .controls button:focus-visible { outline: 1px solid var(--foreground); outline-offset: 3px; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: clamp(2rem, 4vw, 3rem);
+  }
+
+  figure { margin: 0; }
+  figcaption { margin-top: 0.9rem; display: flex; justify-content: space-between; }
+  figcaption .meta { color: var(--ink-faint); }
+
+  /* ── Card geometry ──
+     Trim 3.5 × 2 in, bleed 0.125 in each side → sheet 3.75 × 2.25 in.
+     Everything inside is sized off the sheet width (container units),
+     so the screen preview and the printed card are the same drawing. */
+  .frame {
+    position: relative;
+    aspect-ratio: 3.5 / 2;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--hairline);
+  }
+
+  .sheet {
+    position: absolute;
+    left: calc(-0.125 / 3.5 * 100%);
+    right: calc(-0.125 / 3.5 * 100%);
+    top: calc(-0.125 / 2 * 100%);
+    bottom: calc(-0.125 / 2 * 100%);
+    container-type: inline-size;
+    overflow: hidden;
+    --in: calc(100cqw / 3.75);
+    --pt: calc(100cqw / 270);
+  }
+
+  .trim {
+    position: absolute;
+    inset: calc(var(--in) * 0.125);
+  }
+
+  .safe {
+    position: absolute;
+    inset: calc(var(--in) * 0.25);
+  }
+
+  .mark { display: block; height: auto; aspect-ratio: 699 / 477; color: var(--foreground); }
+
+  /* Guides (screen only) */
+  .guides .frame { overflow: visible; }
+  .guides .trim { outline: 1px dashed rgba(255, 255, 255, 0.55); }
+  .guides .safe { outline: 1px dotted rgba(120, 200, 255, 0.7); }
+  .guides .frame { box-shadow: none; }
+
+  /* ── Front ── */
+  .front {
+    background:
+      radial-gradient(130% 150% at 100% 0%,
+        var(--signal) 0%,
+        var(--signal-deep) 34%,
+        var(--signal-night) 66%,
+        var(--background) 100%);
+  }
+
+  [data-variant="mono"] .front {
+    background:
+      radial-gradient(90% 110% at 92% 8%, rgba(120, 130, 160, 0.34), transparent 70%),
+      linear-gradient(135deg, #141418 0%, #0b0b0e 55%, #000 100%);
+  }
+
+  .front .brand { position: absolute; top: 0; left: 0; width: calc(var(--in) * 0.46); }
+
+  .front .who { position: absolute; top: 0; right: 0; text-align: right; }
+
+  .name {
+    font-size: calc(var(--pt) * 10.5);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+  }
+
+  .role {
+    margin-top: calc(var(--pt) * 4);
+    font-size: calc(var(--pt) * 5.5);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-quiet);
+  }
+
+  .tagline {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    max-width: calc(var(--in) * 1.62);
+    font-size: calc(var(--pt) * 6.75);
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+    color: rgba(245, 245, 247, 0.78);
+  }
+
+  /* The large cropped mark: anchored to the trim edge, bleeding past it */
+  .front .hero {
+    position: absolute;
+    width: calc(var(--in) * 2.6);
+    right: calc(var(--in) * -0.8);
+    bottom: calc(var(--in) * -0.58);
+  }
+
+  /* ── Back ── */
+  .back {
+    background:
+      radial-gradient(70% 90% at 100% 0%, rgba(120, 130, 160, 0.10), transparent 70%),
+      var(--background);
+  }
+
+  .qr {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--in) * 0.62);
+    aspect-ratio: 1;
+    background: var(--foreground);
+    color: var(--background);
+  }
+  .qr svg { display: block; width: 100%; height: 100%; }
+
+  .back .brand { position: absolute; top: 0; right: 0; width: calc(var(--in) * 0.36); }
+
+  .contact {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: calc(var(--pt) * 9);
+    row-gap: calc(var(--pt) * 5);
+    align-items: baseline;
+  }
+
+  .contact dt {
+    font-family: var(--font-mono);
+    font-size: calc(var(--pt) * 5);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+  }
+
+  .contact dd {
+    font-size: calc(var(--pt) * 7.25);
+    letter-spacing: -0.005em;
+    color: var(--foreground);
+  }
+
+  .back .sign {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    font-size: calc(var(--pt) * 5.5);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+  }
+
+  /* ── Spec ── */
+  .spec {
+    margin-top: clamp(3.5rem, 8vw, 6rem);
+    padding-top: 2rem;
+    border-top: 1px solid var(--hairline);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 2.5rem clamp(1.5rem, 4vw, 3rem);
+  }
+  .spec h2 { margin-bottom: 1rem; }
+  .spec dl { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem; font-size: 0.8125rem; }
+  .spec dt { color: var(--ink-faint); }
+  .spec dd { font-family: var(--font-mono); font-size: 0.75rem; color: var(--foreground); overflow-wrap: anywhere; }
+  .swatch { display: inline-block; width: 0.7rem; height: 0.7rem; vertical-align: -0.08rem; margin-right: 0.45rem; box-shadow: 0 0 0 1px var(--hairline); }
+  .spec p { font-size: 0.8125rem; line-height: 1.55; color: var(--ink-quiet); }
+  .spec p + p { margin-top: 0.6rem; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); filter: blur(8px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
+  .bar, figure { animation: rise 0.8s var(--enter) both; }
+  figure:nth-child(2) { animation-delay: 0.12s; }
+  @media (prefers-reduced-motion: reduce) { .bar, figure { animation: none; } }
+
+  /* ── Print: one card side per page, with bleed ── */
+  @page { size: 3.75in 2.25in; margin: 0; }
+
+  @media print {
+    body { background: none; }
+    body::before, .bar, .spec, figcaption { display: none; }
+    .shell { max-width: none; padding: 0; }
+    .cards { display: block; }
+    figure { animation: none; break-after: page; page-break-after: always; }
+    figure:last-child { break-after: auto; page-break-after: auto; }
+    .frame { width: 3.75in; height: 2.25in; aspect-ratio: auto; box-shadow: none; overflow: visible; }
+    .sheet { inset: 0; }
+    .trim, .safe { outline: none !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body data-variant="signal">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="cc" viewBox="190 301 699 477">
+    <polygon fill="currentColor" points="469,301.7 503,473.9 449.4,438 342.1,601.1 666,537.5 190.1,719.8"/>
+    <polygon fill="currentColor" points="610,777.3 576,605.1 629.6,641 736.9,477.9 413,541.5 888.9,359.2"/>
+  </symbol>
+</svg>
+
+<main class="shell">
+  <header class="bar">
+    <div>
+      <p class="mark-text">Caryl Atienza</p>
+      <p class="meta" style="margin-top:.35rem">Business card · 3.5 × 2 in</p>
+    </div>
+    <div class="controls" role="group" aria-label="Preview options">
+      <button type="button" data-variant-btn="signal" aria-pressed="true">Signal blue</button>
+      <button type="button" data-variant-btn="mono" aria-pressed="false">Monochrome</button>
+      <button type="button" id="guides" aria-pressed="false">Bleed &amp; safe</button>
+      <button type="button" id="print">Print</button>
+    </div>
+  </header>
+
+  <section class="cards">
+    <figure>
+      <div class="frame">
+        <div class="sheet front">
+          <div class="trim">
+            <svg class="mark hero" aria-hidden="true"><use href="#cc"/></svg>
+            <div class="safe">
+              <svg class="mark brand" role="img" aria-label="Caryl Atienza logo"><use href="#cc"/></svg>
+              <div class="who">
+                <p class="name">Caryl Joy Atienza</p>
+                <p class="role">Full Stack Developer</p>
+              </div>
+              <p class="tagline">Building systems at the intersection of software, data, design and&nbsp;AI.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><span class="meta">Front</span><span class="meta">01</span></figcaption>
+    </figure>
+
+    <figure>
+      <div class="frame">
+        <div class="sheet back">
+          <div class="trim">
+            <div class="safe">
+              <div class="qr" id="qr" role="img" aria-label="QR code linking to carylatienza.com"></div>
+              <svg class="mark brand" aria-hidden="true"><use href="#cc"/></svg>
+              <dl class="contact">
+                <dt>Email</dt><dd>carylatienzaa@gmail.com</dd>
+                <dt>Web</dt><dd>carylatienza.com</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><span class="meta">Back</span><span class="meta">02</span></figcaption>
+    </figure>
+  </section>
+
+  <section class="spec" aria-label="Design specification">
+    <div>
+      <h2 class="meta">Colour</h2>
+      <dl>
+        <dt>Background</dt><dd><span class="swatch" style="background:#060607"></span>#060607</dd>
+        <dt>Text</dt><dd><span class="swatch" style="background:#f5f5f7"></span>#f5f5f7</dd>
+        <dt>Muted</dt><dd>#f5f5f7 @ 62% / 50% / 38%</dd>
+        <dt>Hairline</dt><dd>#fff @ 10%</dd>
+        <dt>Glow</dt><dd><span class="swatch" style="background:rgb(120,130,160)"></span>rgb(120 130 160) @ 16%</dd>
+        <dt>Accent</dt><dd><span class="swatch" style="background:#2b47ff"></span>#2b47ff signal</dd>
+        <dt>Gradient</dt><dd>#2b47ff → #1124b8 → #0a1150 → #060607, radial from top-right</dd>
+      </dl>
+    </div>
+    <div>
+      <h2 class="meta">Type</h2>
+      <dl>
+        <dt>Sans</dt><dd>Inter 400 / 500 / 600</dd>
+        <dt>Mono</dt><dd>Geist Mono 500</dd>
+        <dt>Name</dt><dd>10.5pt / 600 / −1.5%</dd>
+        <dt>Tagline</dt><dd>6.75pt / 400 / 1.4</dd>
+        <dt>Contact</dt><dd>7.25pt / 400</dd>
+        <dt>Labels</dt><dd>5–5.5pt / 500 / caps +16%</dd>
+      </dl>
+    </div>
+    <div>
+      <h2 class="meta">Layout</h2>
+      <dl>
+        <dt>Trim</dt><dd>3.5 × 2 in (88.9 × 50.8 mm)</dd>
+        <dt>Bleed</dt><dd>0.125 in each side</dd>
+        <dt>Margin</dt><dd>0.25 in, all sides</dd>
+        <dt>Grid</dt><dd>Four corners — anchors only, no centre content</dd>
+        <dt>Radius</dt><dd>0 (square, as in the site)</dd>
+        <dt>Shadow</dt><dd>None on print</dd>
+      </dl>
+    </div>
+    <div>
+      <h2 class="meta">Visual language</h2>
+      <p>One effect per surface: a light pooled from the top-right, as on the portfolio's landing page. The CC mark is the only graphic — small as a signature, large and cropped as the image.</p>
+      <p>Labels instead of icons. Uppercase, widely tracked micro-type carries the hierarchy the way the site's meta line does.</p>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+  // QR → https://carylatienza.com, drawn as one SVG path so it stays crisp in print.
+  (function () {
+    var host = document.getElementById("qr");
+    var quiet = 2;
+    try {
+      var qr = qrcode(0, "M");
+      qr.addData("https://carylatienza.com");
+      qr.make();
+      var n = qr.getModuleCount(), size = n + quiet * 2, d = "";
+      for (var r = 0; r < n; r++)
+        for (var c = 0; c < n; c++)
+          if (qr.isDark(r, c)) d += "M" + (c + quiet) + " " + (r + quiet) + "h1v1h-1z";
+      host.innerHTML = '<svg viewBox="0 0 ' + size + " " + size + '" shape-rendering="crispEdges"><path fill="currentColor" d="' + d + '"/></svg>';
+    } catch (e) {
+      host.innerHTML = '<svg viewBox="0 0 10 10"><text x="5" y="5.6" text-anchor="middle" font-size="1.4" font-family="monospace" fill="currentColor">QR</text></svg>';
+    }
+  })();
+
+  var buttons = document.querySelectorAll("[data-variant-btn]");
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.body.dataset.variant = b.dataset.variantBtn;
+      buttons.forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
+    });
+  });
+
+  var g = document.getElementById("guides");
+  g.addEventListener("click", function () {
+    var on = document.body.classList.toggle("guides");
+    g.setAttribute("aria-pressed", String(on));
+  });
+
+  document.getElementById("print").addEventListener("click", function () { window.print(); });
+</script>
+</body>
+</html>
