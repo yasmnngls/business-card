@@ -26,7 +26,8 @@ The repo has no brand colour. Blue is confined to the card front, so the page it
 - **Role:** 5.5pt, 500, uppercase, +16% tracking (the site's `.meta`)
 - **Body / tagline:** 6pt, 400, 1.4 line height
 - **Contact values:** 6pt, 400 (same as the tagline)
-- **Labels:** Geist Mono 5pt, 500, uppercase, +16%. Phone screens get an 8px / 7.5px minimum.
+- **Labels:** Geist Mono 5pt, 500, uppercase, +16% (role line). Phone screens get an 8px minimum.
+- **Contact icons:** 6.5pt monochrome glyphs in muted 38% (62% while the row's link is hovered), with a 10px minimum on phones. The words stay as screen-reader text.
 - **UI chrome:** 0.6875rem uppercase meta (`page.module.css .meta`, `.hint`)
 
 ## Spacing
@@ -58,4 +59,4 @@ rather than imports:
 - **Links:** the `.link` colour transition (quiet → full ink)
 - **Focus:** a 1px `--foreground` outline offset 4px, from `.link:focus-visible`
 - **Dialog:** a native `<dialog>`, so there's no new primitive
-- **Icons:** none. Labels do the job, as on the site.
+- **Icons:** used only to key the contact rows. Phone and globe come from Material Icons (Apache-2.0); Gmail, LinkedIn and Facebook come from Simple Icons (CC0). All are inlined as `<symbol>`s with `currentColor` fills.
