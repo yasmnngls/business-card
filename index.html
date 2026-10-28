@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Caryl Atienza Card</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Caryl Joy Atienza</title>
+<meta name="description" content="Caryl Joy Atienza — Full Stack Developer. Building systems at the intersection of software, data, design and AI.">
+<meta name="theme-color" content="#060607">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -16,8 +18,11 @@
     --ink-faint: rgba(245, 245, 247, 0.5);
     --ink-ghost: rgba(245, 245, 247, 0.38);   /* card-front.svg footer */
     --hairline: rgba(255, 255, 255, 0.10);    /* card-front.svg frame */
+    --hairline-strong: rgba(255, 255, 255, 0.32);
     --glow: rgba(120, 130, 160, 0.16);        /* page.module.css .page::before */
-    --enter: cubic-bezier(0.16, 1, 0.3, 1);
+    --enter: cubic-bezier(0.16, 1, 0.3, 1);   /* page.module.css --enter */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1); /* SplitFlapText flap curve — presses, hovers, swaps */
+    --turn: cubic-bezier(0.6, 0, 0.2, 1);     /* flip: in-out, slightly front-loaded so the click registers at once */
 
     /* The one accent, taken from the reference. Hue 228° — the same hue
        family as the portfolio's cool glow, pushed to full saturation. */
@@ -32,42 +37,35 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html, body { max-width: 100vw; overflow-x: hidden; }
+
   body {
     min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    position: relative;
+    -webkit-tap-highlight-color: transparent;
   }
 
+  /* soft light pooled behind the card — the only page "effect", as on the site */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: radial-gradient(ellipse 60% 55% at 50% 30%, var(--glow), transparent 70%);
+    background: radial-gradient(ellipse 60% 55% at 50% 42%, var(--glow), transparent 70%);
     pointer-events: none;
   }
 
-  /* ── Preview shell ── */
-  .shell {
-    position: relative;
-    max-width: 1240px;
-    margin: 0 auto;
-    padding: clamp(1.5rem, 3.5vw, 2.5rem) clamp(1rem, 4.5vw, 3.5rem) 4rem;
-  }
+  a { color: inherit; text-decoration: none; }
 
-  .bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem 1.5rem;
-    margin-bottom: clamp(2rem, 5vw, 3.5rem);
-  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 
-  .mark-text { font-size: 0.875rem; font-weight: 500; letter-spacing: -0.011em; }
+  :focus-visible { outline: 1px solid var(--foreground); outline-offset: 4px; border-radius: 2px; }
 
   .meta {
     font-size: 0.6875rem;
@@ -77,47 +75,78 @@
     color: var(--ink-quiet);
   }
 
-  .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-
-  .controls button {
-    font: inherit;
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--ink-quiet);
-    background: transparent;
-    border: 1px solid var(--hairline);
-    border-radius: 2px;
-    padding: 0.55rem 0.8rem;
-    cursor: pointer;
-    transition: color 0.25s ease, border-color 0.25s ease;
-  }
-  .controls button:hover,
-  .controls button[aria-pressed="true"] { color: var(--foreground); border-color: rgba(255, 255, 255, 0.32); }
-  .controls button:focus-visible { outline: 1px solid var(--foreground); outline-offset: 3px; }
-
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-    gap: clamp(2rem, 4vw, 3rem);
+  /* ── Page frame ── */
+  .bar {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 3.5vw, 2.5rem) clamp(1rem, 4.5vw, 3.5rem);
   }
 
-  figure { margin: 0; }
-  figcaption { margin-top: 0.9rem; display: flex; justify-content: space-between; }
-  figcaption .meta { color: var(--ink-faint); }
+  .bar .name-mark { font-size: 0.875rem; font-weight: 500; letter-spacing: -0.011em; }
+
+  .stage {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.25rem, 3vw, 2rem);
+    padding: 0 clamp(1rem, 4.5vw, 3.5rem) clamp(1.5rem, 4vw, 3rem);
+  }
+
+  /* ── Card: scene → tilt → flipper → faces ──
+     Width is bounded by the viewport in both directions so the card
+     is never distorted and always fits with its controls. */
+  .scene {
+    width: min(100%, 640px, calc((100svh - 300px) * 1.75));
+    min-width: min(100%, 280px);
+    perspective: 1600px;
+  }
+
+  .tilt {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .flipper {
+    position: relative;
+    aspect-ratio: 3.5 / 2;
+    transform-style: preserve-3d;
+    transition: transform 560ms var(--turn);
+  }
+
+  .is-flipped .flipper { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-align: left;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    box-shadow:
+      0 calc(28px + var(--lift, 0px)) 60px -24px rgba(0, 0, 0, 0.75),
+      0 0 0 1px var(--hairline);
+  }
+
+  .face.back { transform: rotateY(180deg); }
+
+  /* the card acknowledges the press before it starts to turn */
+  .face.front { transition: transform 160ms var(--ease-out); }
+  .face.front:active { transform: scale(0.985); }
+
+  .face:focus-visible { outline-offset: 6px; border-radius: 0; }
 
   /* ── Card geometry ──
      Trim 3.5 × 2 in, bleed 0.125 in each side → sheet 3.75 × 2.25 in.
      Everything inside is sized off the sheet width (container units),
-     so the screen preview and the printed card are the same drawing. */
-  .frame {
-    position: relative;
-    aspect-ratio: 3.5 / 2;
-    overflow: hidden;
-    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--hairline);
-  }
-
+     so the screen card and the printed card are the same drawing. */
   .sheet {
     position: absolute;
     left: calc(-0.125 / 3.5 * 100%);
@@ -130,38 +159,31 @@
     --pt: calc(100cqw / 270);
   }
 
-  .trim {
-    position: absolute;
-    inset: calc(var(--in) * 0.125);
-  }
-
-  .safe {
-    position: absolute;
-    inset: calc(var(--in) * 0.25);
-  }
+  .trim { position: absolute; inset: calc(var(--in) * 0.125); }
+  .safe { position: absolute; inset: calc(var(--in) * 0.25); }
 
   .mark { display: block; height: auto; aspect-ratio: 699 / 477; color: var(--foreground); }
 
-  /* Guides (screen only) */
-  .guides .frame { overflow: visible; }
-  .guides .trim { outline: 1px dashed rgba(255, 255, 255, 0.55); }
-  .guides .safe { outline: 1px dotted rgba(120, 200, 255, 0.7); }
-  .guides .frame { box-shadow: none; }
-
   /* ── Front ── */
-  .front {
+  .front .sheet { background: var(--background); }
+
+  /* the gradient lives on an oversized layer so it can drift without repainting */
+  .front .sheet::before {
+    content: "";
+    position: absolute;
+    inset: -12%;
     background:
       radial-gradient(130% 150% at 100% 0%,
         var(--signal) 0%,
         var(--signal-deep) 34%,
         var(--signal-night) 66%,
         var(--background) 100%);
+    animation: drift 22s ease-in-out infinite alternate;
   }
 
-  [data-variant="mono"] .front {
-    background:
-      radial-gradient(90% 110% at 92% 8%, rgba(120, 130, 160, 0.34), transparent 70%),
-      linear-gradient(135deg, #141418 0%, #0b0b0e 55%, #000 100%);
+  @keyframes drift {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-4%, 3%, 0); }
   }
 
   .front .brand { position: absolute; top: 0; left: 0; width: calc(var(--in) * 0.46); }
@@ -169,6 +191,7 @@
   .front .who { position: absolute; top: 0; right: 0; text-align: right; }
 
   .name {
+    display: block;
     font-size: calc(var(--pt) * 10.5);
     font-weight: 600;
     letter-spacing: -0.015em;
@@ -176,6 +199,7 @@
   }
 
   .role {
+    display: block;
     margin-top: calc(var(--pt) * 4);
     font-size: calc(var(--pt) * 5.5);
     font-weight: 500;
@@ -188,14 +212,15 @@
     position: absolute;
     left: 0;
     bottom: 0;
-    max-width: calc(var(--in) * 1.62);
-    font-size: calc(var(--pt) * 6.75);
+    display: block;
+    max-width: calc(var(--in) * 1.46);
+    font-size: calc(var(--pt) * 6);
     line-height: 1.4;
     letter-spacing: -0.005em;
     color: rgba(245, 245, 247, 0.78);
   }
 
-  /* The large cropped mark: anchored to the trim edge, bleeding past it */
+  /* The large cropped mark: anchored past the trim edge */
   .front .hero {
     position: absolute;
     width: calc(var(--in) * 2.6);
@@ -204,24 +229,29 @@
   }
 
   /* ── Back ── */
-  .back {
+  .back .sheet {
     background:
       radial-gradient(70% 90% at 100% 0%, rgba(120, 130, 160, 0.10), transparent 70%),
       var(--background);
   }
 
+  /* mark top-left on both sides; QR takes the right column so the
+     contact list can use the full height of the left */
   .qr {
     position: absolute;
     top: 0;
-    left: 0;
+    right: 0;
     width: calc(var(--in) * 0.62);
     aspect-ratio: 1;
     background: var(--foreground);
     color: var(--background);
+    transition: transform 200ms var(--ease-out);
   }
+  .qr:active { transform: scale(0.97); }
   .qr svg { display: block; width: 100%; height: 100%; }
+  .qr:focus-visible { outline-offset: 3px; }
 
-  .back .brand { position: absolute; top: 0; right: 0; width: calc(var(--in) * 0.36); }
+  .back .brand { position: absolute; top: 0; left: 0; width: calc(var(--in) * 0.36); }
 
   .contact {
     position: absolute;
@@ -230,7 +260,7 @@
     display: grid;
     grid-template-columns: auto auto;
     column-gap: calc(var(--pt) * 9);
-    row-gap: calc(var(--pt) * 5);
+    row-gap: calc(var(--pt) * 3.5);
     align-items: baseline;
   }
 
@@ -243,66 +273,187 @@
     color: var(--ink-ghost);
   }
 
-  .contact dd {
-    font-size: calc(var(--pt) * 7.25);
-    letter-spacing: -0.005em;
-    color: var(--foreground);
+  .contact dd { font-size: calc(var(--pt) * 6); letter-spacing: -0.005em; }
+
+  .contact a { position: relative; }
+  .contact a::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.1em;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 200ms var(--ease-out);
+  }
+  /* widen the hit area without moving the type */
+  .contact a::after { content: ""; position: absolute; inset: -0.3em -0.4em; }
+
+  @media (hover: hover) and (pointer: fine) {
+    .contact a:hover::before { transform: scaleX(1); transform-origin: left; }
+    .qr:hover:not(:active) { transform: scale(1.04); }
   }
 
-  .back .sign {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    font-size: calc(var(--pt) * 5.5);
+  /* ── Utilities beneath the card ── */
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 100%;
+  }
+
+  .action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 0.95rem;
+    font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--ink-ghost);
+    white-space: nowrap;
+    color: var(--ink-quiet);
+    border: 1px solid var(--hairline);
+    border-radius: 2px;
+    transition: color 200ms ease, border-color 200ms ease, transform 160ms var(--ease-out);
+  }
+  .action:active { transform: scale(0.97); }
+  .action.primary { color: var(--foreground); border-color: var(--hairline-strong); }
+  @media (hover: hover) and (pointer: fine) {
+    .action:hover { color: var(--foreground); border-color: var(--hairline-strong); }
   }
 
-  /* ── Spec ── */
-  .spec {
-    margin-top: clamp(3.5rem, 8vw, 6rem);
-    padding-top: 2rem;
-    border-top: 1px solid var(--hairline);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-    gap: 2.5rem clamp(1.5rem, 4vw, 3rem);
+  /* stacked labels share one cell, so a button never changes width when its label swaps */
+  .swap { display: inline-grid; }
+  .swap > span {
+    grid-area: 1 / 1;
+    text-align: center;
+    transition: opacity 150ms ease, filter 150ms ease, transform 200ms var(--ease-out), visibility 150ms;
   }
-  .spec h2 { margin-bottom: 1rem; }
-  .spec dl { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1rem; font-size: 0.8125rem; }
-  .spec dt { color: var(--ink-faint); }
-  .spec dd { font-family: var(--font-mono); font-size: 0.75rem; color: var(--foreground); overflow-wrap: anywhere; }
-  .swatch { display: inline-block; width: 0.7rem; height: 0.7rem; vertical-align: -0.08rem; margin-right: 0.45rem; box-shadow: 0 0 0 1px var(--hairline); }
-  .spec p { font-size: 0.8125rem; line-height: 1.55; color: var(--ink-quiet); }
-  .spec p + p { margin-top: 0.6rem; }
+  .swap > span:last-child,
+  [data-state="on"] .swap > span:first-child { opacity: 0; filter: blur(2px); transform: translateY(3px); visibility: hidden; }
+  [data-state="on"] .swap > span:last-child { opacity: 1; filter: none; transform: none; visibility: visible; }
 
+  .status {
+    min-height: 1.2em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity 150ms ease, transform 150ms var(--ease-out);
+  }
+  .status[data-visible] { opacity: 1; transform: none; transition-duration: 220ms; }
+
+  /* ── QR preview ── */
+  dialog {
+    margin: auto;
+    width: min(340px, calc(100vw - 2rem));
+    padding: 1.5rem;
+    color: var(--foreground);
+    background: #0b0b0e;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.9);
+  }
+  /* transition-driven so it can leave as well as arrive; leaving is faster */
+  dialog,
+  dialog::backdrop {
+    opacity: 0;
+    transition: opacity 150ms ease, transform 150ms ease, overlay 150ms allow-discrete, display 150ms allow-discrete;
+  }
+  dialog { transform: scale(0.96); }
+  dialog::backdrop { background: rgba(6, 6, 7, 0.72); }
+  dialog[open],
+  dialog[open]::backdrop { opacity: 1; transform: none; transition-duration: 220ms; transition-timing-function: var(--ease-out); }
+  @starting-style {
+    dialog[open],
+    dialog[open]::backdrop { opacity: 0; }
+    dialog[open] { transform: scale(0.96); }
+  }
+
+  .dialog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+  .dialog-head .action { min-height: 36px; padding: 0 0.7rem; }
+
+  .qr-large { background: var(--foreground); color: var(--background); aspect-ratio: 1; }
+  .qr-large svg { display: block; width: 100%; height: 100%; }
+
+  .destination { margin-top: 1.1rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .destination a { font-size: 0.875rem; }
+  @media (hover: hover) and (pointer: fine) { .destination a:hover { text-decoration: underline; text-underline-offset: 3px; } }
+
+  /* ── Entrance — one authored moment, as on the site ── */
   @keyframes rise {
     from { opacity: 0; transform: translateY(10px); filter: blur(8px); }
     to { opacity: 1; transform: none; filter: none; }
   }
-  .bar, figure { animation: rise 0.8s var(--enter) both; }
-  figure:nth-child(2) { animation-delay: 0.12s; }
-  @media (prefers-reduced-motion: reduce) { .bar, figure { animation: none; } }
+  .bar > * { animation: rise 0.8s var(--enter) both; }
+  .bar > :last-child { animation-delay: 0.18s; }
+  .scene { animation: rise 0.9s var(--enter) 0.25s both; }
+  .actions > * { animation: rise 0.6s var(--enter) both; }
+  .actions > :nth-child(1) { animation-delay: 0.40s; }
+  .actions > :nth-child(2) { animation-delay: 0.44s; }
+  .actions > :nth-child(3) { animation-delay: 0.48s; }
+  @keyframes fade { from { opacity: 0; } }
 
-  /* ── Print: one card side per page, with bleed ── */
+  @media (max-width: 520px) {
+    .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+    .actions .primary { grid-column: span 2; }
+    .action { padding: 0 0.75rem; letter-spacing: 0.12em; }
+    /* keep micro-type legible when the card is phone-sized (screen only) */
+    .role { font-size: max(calc(var(--pt) * 5.5), 8px); }
+    .contact dt { font-size: max(calc(var(--pt) * 5), 7.5px); }
+  }
+
+  /* reduced motion is gentler, not nothing: fades stay, movement goes */
+  @media (prefers-reduced-motion: reduce) {
+    .bar > *, .scene, .actions > * { animation: fade 0.4s ease both; }
+    .front .sheet::before { animation: none; }
+    .flipper, .is-flipped .flipper, .face.back, .face.front:active, dialog { transform: none; }
+    .flipper { transition: none; }
+    .face { transition: opacity 200ms ease; }
+    .is-flipped .face.front, .scene:not(.is-flipped) .face.back { opacity: 0; pointer-events: none; }
+    .swap > span, .action, .qr, .status { transform: none !important; }
+  }
+
+  /* ── Print: the physical card only — one side per page, with bleed ── */
   @page { size: 3.75in 2.25in; margin: 0; }
 
   @media print {
-    body { background: none; }
-    body::before, .bar, .spec, figcaption { display: none; }
-    .shell { max-width: none; padding: 0; }
-    .cards { display: block; }
-    figure { animation: none; break-after: page; page-break-after: always; }
-    figure:last-child { break-after: auto; page-break-after: auto; }
-    .frame { width: 3.75in; height: 2.25in; aspect-ratio: auto; box-shadow: none; overflow: visible; }
+    /* White paper around the card — the faces keep their own backgrounds */
+    :root { color-scheme: light; }
+    html, body, .stage, .scene { background: #fff !important; overflow: visible; }
+    body::before, .bar, .actions, .status, dialog { display: none !important; }
+    .stage { display: block; padding: 0; }
+    .scene { width: auto; min-width: 0; perspective: none; animation: none; }
+    .tilt, .flipper, .face, .face.back, .front .hero { transform: none !important; }
+    .flipper { aspect-ratio: auto; transition: none; }
+    .face {
+      position: relative;
+      width: 3.75in;
+      height: 2.25in;
+      overflow: visible;
+      box-shadow: none;
+      -webkit-backface-visibility: visible;
+      backface-visibility: visible;
+      break-after: page;
+      page-break-after: always;
+    }
+    .face.back { break-after: auto; page-break-after: auto; }
     .sheet { inset: 0; }
-    .trim, .safe { outline: none !important; }
+    .front .sheet::before { animation: none; }
+    .contact a::before { display: none; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
 </head>
-<body data-variant="signal">
+<body>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="cc" viewBox="190 301 699 477">
@@ -311,137 +462,249 @@
   </symbol>
 </svg>
 
-<main class="shell">
-  <header class="bar">
-    <div>
-      <p class="mark-text">Caryl Atienza</p>
-      <p class="meta" style="margin-top:.35rem">Business card · 3.5 × 2 in</p>
-    </div>
-    <div class="controls" role="group" aria-label="Preview options">
-      <button type="button" data-variant-btn="signal" aria-pressed="true">Signal blue</button>
-      <button type="button" data-variant-btn="mono" aria-pressed="false">Monochrome</button>
-      <button type="button" id="guides" aria-pressed="false">Bleed &amp; safe</button>
-      <button type="button" id="print">Print</button>
-    </div>
-  </header>
+<header class="bar">
+  <p class="name-mark">Caryl Atienza</p>
+</header>
 
-  <section class="cards">
-    <figure>
-      <div class="frame">
-        <div class="sheet front">
-          <div class="trim">
-            <svg class="mark hero" aria-hidden="true"><use href="#cc"/></svg>
-            <div class="safe">
-              <svg class="mark brand" role="img" aria-label="Caryl Atienza logo"><use href="#cc"/></svg>
-              <div class="who">
-                <p class="name">Caryl Joy Atienza</p>
-                <p class="role">Full Stack Developer</p>
+<main class="stage">
+  <div class="scene" id="scene">
+    <div class="tilt" id="tilt">
+      <div class="flipper">
+
+        <button class="face front" id="front" type="button" aria-label="Caryl Joy Atienza, Full Stack Developer. Turn card over for contact details.">
+          <span class="sheet">
+            <span class="trim">
+              <svg class="mark hero" id="hero" aria-hidden="true"><use href="#cc"/></svg>
+              <span class="safe">
+                <svg class="mark brand" aria-hidden="true"><use href="#cc"/></svg>
+                <span class="who">
+                  <span class="name">Caryl Joy Atienza</span>
+                  <span class="role">Full Stack Developer</span>
+                </span>
+                <span class="tagline">Building systems at the intersection of software, data, design and&nbsp;AI.</span>
+              </span>
+            </span>
+          </span>
+        </button>
+
+        <section class="face back" id="card-back" tabindex="-1" aria-label="Contact" inert>
+          <div class="sheet">
+            <div class="trim">
+              <div class="safe">
+                <button class="qr" id="qr" type="button" aria-haspopup="dialog" aria-label="Enlarge QR code for carylatienza.com"></button>
+                <svg class="mark brand" aria-hidden="true"><use href="#cc"/></svg>
+                <dl class="contact">
+                  <dt>Phone</dt><dd><a href="tel:+639690481894" data-announce="Opening your phone app">+63 969 048 1894</a></dd>
+                  <dt>Email</dt><dd><a href="mailto:carylatienzaa@gmail.com" data-announce="Opening your mail app">carylatienzaa@gmail.com</a></dd>
+                  <dt>Web</dt><dd><a href="https://carylatienza.com" target="_blank" rel="noopener" data-announce="Opening carylatienza.com">carylatienza.com</a></dd>
+                  <dt>LinkedIn</dt><dd><a href="https://www.linkedin.com/in/carylatienzaa" target="_blank" rel="noopener" data-announce="Opening LinkedIn">linkedin.com/in/carylatienzaa</a></dd>
+                  <dt>Facebook</dt><dd><a href="https://www.facebook.com/carylatienzaa" target="_blank" rel="noopener" data-announce="Opening Facebook">facebook.com/carylatienzaa</a></dd>
+                </dl>
               </div>
-              <p class="tagline">Building systems at the intersection of software, data, design and&nbsp;AI.</p>
             </div>
           </div>
-        </div>
-      </div>
-      <figcaption><span class="meta">Front</span><span class="meta">01</span></figcaption>
-    </figure>
+        </section>
 
-    <figure>
-      <div class="frame">
-        <div class="sheet back">
-          <div class="trim">
-            <div class="safe">
-              <div class="qr" id="qr" role="img" aria-label="QR code linking to carylatienza.com"></div>
-              <svg class="mark brand" aria-hidden="true"><use href="#cc"/></svg>
-              <dl class="contact">
-                <dt>Email</dt><dd>carylatienzaa@gmail.com</dd>
-                <dt>Web</dt><dd>carylatienza.com</dd>
-              </dl>
-            </div>
-          </div>
-        </div>
       </div>
-      <figcaption><span class="meta">Back</span><span class="meta">02</span></figcaption>
-    </figure>
-  </section>
+    </div>
+  </div>
 
-  <section class="spec" aria-label="Design specification">
-    <div>
-      <h2 class="meta">Colour</h2>
-      <dl>
-        <dt>Background</dt><dd><span class="swatch" style="background:#060607"></span>#060607</dd>
-        <dt>Text</dt><dd><span class="swatch" style="background:#f5f5f7"></span>#f5f5f7</dd>
-        <dt>Muted</dt><dd>#f5f5f7 @ 62% / 50% / 38%</dd>
-        <dt>Hairline</dt><dd>#fff @ 10%</dd>
-        <dt>Glow</dt><dd><span class="swatch" style="background:rgb(120,130,160)"></span>rgb(120 130 160) @ 16%</dd>
-        <dt>Accent</dt><dd><span class="swatch" style="background:#2b47ff"></span>#2b47ff signal</dd>
-        <dt>Gradient</dt><dd>#2b47ff → #1124b8 → #0a1150 → #060607, radial from top-right</dd>
-      </dl>
-    </div>
-    <div>
-      <h2 class="meta">Type</h2>
-      <dl>
-        <dt>Sans</dt><dd>Inter 400 / 500 / 600</dd>
-        <dt>Mono</dt><dd>Geist Mono 500</dd>
-        <dt>Name</dt><dd>10.5pt / 600 / −1.5%</dd>
-        <dt>Tagline</dt><dd>6.75pt / 400 / 1.4</dd>
-        <dt>Contact</dt><dd>7.25pt / 400</dd>
-        <dt>Labels</dt><dd>5–5.5pt / 500 / caps +16%</dd>
-      </dl>
-    </div>
-    <div>
-      <h2 class="meta">Layout</h2>
-      <dl>
-        <dt>Trim</dt><dd>3.5 × 2 in (88.9 × 50.8 mm)</dd>
-        <dt>Bleed</dt><dd>0.125 in each side</dd>
-        <dt>Margin</dt><dd>0.25 in, all sides</dd>
-        <dt>Grid</dt><dd>Four corners — anchors only, no centre content</dd>
-        <dt>Radius</dt><dd>0 (square, as in the site)</dd>
-        <dt>Shadow</dt><dd>None on print</dd>
-      </dl>
-    </div>
-    <div>
-      <h2 class="meta">Visual language</h2>
-      <p>One effect per surface: a light pooled from the top-right, as on the portfolio's landing page. The CC mark is the only graphic — small as a signature, large and cropped as the image.</p>
-      <p>Labels instead of icons. Uppercase, widely tracked micro-type carries the hierarchy the way the site's meta line does.</p>
-    </div>
-  </section>
+  <nav class="actions" aria-label="Contact actions">
+    <button class="action primary" type="button" id="flip" data-flip aria-controls="scene"><span class="swap"><span>View back</span><span>View front</span></span></button>
+    <button class="action" type="button" id="vcard">Save contact</button>
+    <button class="action" type="button" id="print">Print</button>
+  </nav>
+
+  <p class="status" id="status" role="status" aria-live="polite"></p>
 </main>
+
+<dialog id="qr-dialog" aria-labelledby="qr-title">
+  <div class="dialog-head">
+    <h2 class="meta" id="qr-title">Scan to visit</h2>
+    <button class="action" type="button" id="qr-close">Close</button>
+  </div>
+  <div class="qr-large" id="qr-large" role="img" aria-label="QR code linking to https://carylatienza.com"></div>
+  <p class="destination">
+    <span class="meta">Opens</span>
+    <a href="https://carylatienza.com" target="_blank" rel="noopener">carylatienza.com</a>
+  </p>
+</dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
-  // QR → https://carylatienza.com, drawn as one SVG path so it stays crisp in print.
-  (function () {
-    var host = document.getElementById("qr");
+(function () {
+  var EMAIL = "carylatienzaa@gmail.com";
+  var SITE = "https://carylatienza.com";
+
+  var scene = document.getElementById("scene");
+  var tilt = document.getElementById("tilt");
+  var front = document.getElementById("front");
+  var back = document.getElementById("card-back");
+  var flipBtn = document.getElementById("flip");
+  var status = document.getElementById("status");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+
+  /* ── Status line: one quiet confirmation channel for every action ── */
+  var statusTimer;
+  function announce(text) {
+    clearTimeout(statusTimer);
+    status.textContent = text;
+    status.dataset.visible = "";
+    statusTimer = setTimeout(function () {
+      delete status.dataset.visible;
+      statusTimer = setTimeout(function () { status.textContent = ""; }, 200);
+    }, 2400);
+  }
+
+  document.querySelectorAll("[data-announce]").forEach(function (el) {
+    el.addEventListener("click", function () { announce(el.dataset.announce); });
+  });
+
+  /* ── QR → SITE, drawn as one SVG path so it stays crisp in print ── */
+  function qrSvg() {
     var quiet = 2;
     try {
       var qr = qrcode(0, "M");
-      qr.addData("https://carylatienza.com");
+      qr.addData(SITE);
       qr.make();
       var n = qr.getModuleCount(), size = n + quiet * 2, d = "";
       for (var r = 0; r < n; r++)
         for (var c = 0; c < n; c++)
           if (qr.isDark(r, c)) d += "M" + (c + quiet) + " " + (r + quiet) + "h1v1h-1z";
-      host.innerHTML = '<svg viewBox="0 0 ' + size + " " + size + '" shape-rendering="crispEdges"><path fill="currentColor" d="' + d + '"/></svg>';
+      return '<svg viewBox="0 0 ' + size + " " + size + '" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="' + d + '"/></svg>';
     } catch (e) {
-      host.innerHTML = '<svg viewBox="0 0 10 10"><text x="5" y="5.6" text-anchor="middle" font-size="1.4" font-family="monospace" fill="currentColor">QR</text></svg>';
+      return '<svg viewBox="0 0 10 10" aria-hidden="true"><text x="5" y="5.6" text-anchor="middle" font-size="1.2" font-family="monospace" fill="currentColor">QR placeholder</text></svg>';
     }
-  })();
+  }
+  var svg = qrSvg();
+  document.getElementById("qr").innerHTML = svg;
+  document.getElementById("qr-large").innerHTML = svg;
 
-  var buttons = document.querySelectorAll("[data-variant-btn]");
-  buttons.forEach(function (b) {
-    b.addEventListener("click", function () {
-      document.body.dataset.variant = b.dataset.variantBtn;
-      buttons.forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
-    });
+  /* ── Flip ── */
+  var flipped = false;
+  function setFlipped(next) {
+    if (next === flipped) return;
+    var focusWasInCard = scene.contains(document.activeElement);
+    flipped = next;
+    scene.classList.toggle("is-flipped", flipped);
+    front.inert = flipped;
+    back.inert = !flipped;
+    if (flipped) flipBtn.dataset.state = "on"; else delete flipBtn.dataset.state;
+    history.replaceState(null, "", flipped ? "#back" : location.pathname + location.search);
+    if (focusWasInCard) (flipped ? back : front).focus({ preventScroll: true });
+  }
+
+  front.addEventListener("click", function () { setFlipped(true); });
+  document.querySelectorAll("[data-flip]").forEach(function (b) {
+    b.addEventListener("click", function () { setFlipped(!flipped); });
   });
 
-  var g = document.getElementById("guides");
-  g.addEventListener("click", function () {
-    var on = document.body.classList.toggle("guides");
-    g.setAttribute("aria-pressed", String(on));
+  // pointer users can turn the back over by clicking any empty part of it
+  back.addEventListener("click", function (e) {
+    if (e.target.closest("a, button")) return;
+    setFlipped(false);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && flipped && !dialog.open) setFlipped(false);
+  });
+
+  if (location.hash === "#back") {
+    flipBtn.style.transition = "none";
+    scene.querySelector(".flipper").style.transition = "none";
+    setFlipped(true);
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      scene.querySelector(".flipper").style.transition = "";
+      flipBtn.style.transition = "";
+    }); });
+  }
+
+  /* ── Tilt: a spring, fine pointers only ──
+     The card leans toward whichever edge the pointer is near; the artwork
+     on it stays put, like ink on a real card. Time-based so it feels the
+     same at 60Hz and 120Hz, and keeps its velocity when the pointer
+     changes direction mid-motion. */
+  var MAX = 3;                         // degrees
+  var STIFFNESS = 140, DAMPING = 22;   // just under critical: settles without overshoot you can see
+  var axes = ["x", "y"];
+  var target = { x: 0, y: 0 }, pos = { x: 0, y: 0 }, vel = { x: 0, y: 0 };
+  var raf = 0, last = 0;
+
+  function render() {
+    tilt.style.transform = "rotateX(" + (-pos.y * MAX).toFixed(3) + "deg) rotateY(" + (pos.x * MAX).toFixed(3) + "deg)";
+  }
+
+  function tick(t) {
+    var dt = Math.min((t - (last || t)) / 1000, 1 / 30);
+    last = t;
+    var moving = false;
+    axes.forEach(function (k) {
+      vel[k] += ((target[k] - pos[k]) * STIFFNESS - vel[k] * DAMPING) * dt;
+      pos[k] += vel[k] * dt;
+      if (Math.abs(target[k] - pos[k]) > 0.0005 || Math.abs(vel[k]) > 0.0005) moving = true;
+    });
+    render();
+    if (moving) raf = requestAnimationFrame(tick);
+    else { raf = 0; last = 0; }
+  }
+  function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+
+  scene.addEventListener("pointermove", function (e) {
+    if (e.pointerType !== "mouse" || reduce.matches) return;
+    var r = scene.getBoundingClientRect();
+    target.x = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+    target.y = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+    kick();
+  });
+  scene.addEventListener("pointerleave", function () {
+    target.x = target.y = 0;
+    kick();
+  });
+
+  /* ── QR preview ── */
+  var dialog = document.getElementById("qr-dialog");
+  var qrBtn = document.getElementById("qr");
+  qrBtn.addEventListener("click", function () {
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else window.open(SITE, "_blank", "noopener");
+  });
+  document.getElementById("qr-close").addEventListener("click", function () { dialog.close(); });
+  dialog.addEventListener("click", function (e) { if (e.target === dialog) dialog.close(); });
+  dialog.addEventListener("close", function () { if (flipped) qrBtn.focus({ preventScroll: true }); });
+
+  /* ── Save contact (.vcf, no backend) ── */
+  document.getElementById("vcard").addEventListener("click", function () {
+    var vcf = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      "N:Atienza;Caryl Joy;;;",
+      "FN:Caryl Joy Atienza",
+      "TITLE:Full Stack Developer",
+      "TEL;TYPE=CELL:+639690481894",
+      "EMAIL;TYPE=INTERNET:" + EMAIL,
+      "URL:" + SITE,
+      "URL:https://www.linkedin.com/in/carylatienzaa",
+      "URL:https://www.facebook.com/carylatienzaa",
+      "END:VCARD"
+    ].join("\r\n") + "\r\n";
+    var url = URL.createObjectURL(new Blob([vcf], { type: "text/vcard;charset=utf-8" }));
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "caryl-joy-atienza.vcf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    announce("Contact saved");
   });
 
   document.getElementById("print").addEventListener("click", function () { window.print(); });
+
+  // print always shows both sides, even if the hidden face is inert
+  window.addEventListener("beforeprint", function () { front.inert = back.inert = false; });
+  window.addEventListener("afterprint", function () { front.inert = flipped; back.inert = !flipped; });
+})();
 </script>
 </body>
 </html>
